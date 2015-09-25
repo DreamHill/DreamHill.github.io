@@ -1,7 +1,3 @@
----
-layout: default
----
-
 <div class="posts">
   {% for post in paginator.posts %}
   <article class="post">
@@ -56,38 +52,4 @@ layout: default
   
 </div>
 {% endif %}
- <script type="text/javascript">
-      var config = {
-        "browser_warning_page": "http://dreamhill.github.io/browser-warning/",
-        "disqus_shortname": "dreamhill"
-      };
-      /* Browser support detection */
-      var browserSupport = (function(){
-        var htmlElemClasses = document.querySelector('html').className.split(' ');
-        for ( var i = 0; i < htmlElemClasses.length; i += 1 ){
-          var className = htmlElemClasses[i];
-          if ( className === 'lt-ie9' ){
-            return true;
-          }
-        }
-      }());
 
-      if (browserSupport){
-        window.location="http://dreamhill.github.io/browser-warning/";
-      }
-
-      /* To avoid render blocking css */
-      var cb = function() {
-        var l = document.createElement('link'); l.rel = 'stylesheet';
-        l.href = 'http://fonts.googleapis.com/css?family=PT+Sans';
-        var h = document.getElementsByTagName('head')[0]; h.parentNode.insertBefore(l, h);
-      };
-      var raf = requestAnimationFrame || mozRequestAnimationFrame ||
-          webkitRequestAnimationFrame || msRequestAnimationFrame;
-      if (raf) raf(cb);
-      else window.addEventListener('load', cb);
-
-
-    </script>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script async type="text/javascript" src="http://dreamhill.github.io/assets/js/gaya.min.js"></script>
