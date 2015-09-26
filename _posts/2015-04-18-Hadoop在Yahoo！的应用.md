@@ -12,11 +12,11 @@ comments: true
 
 #2.Hadoop在eBay的应用
 
-Hadoop在百度的应用
+#3.Hadoop在百度的应用
 
-Hadoop在Facebook的应用
+<a href="http://book.51cto.com/art/201110/298609.htm">Hadoop在Facebook的应用</a>
 
-Hadoop平台上的海量数据排序
+<a href="http://book.51cto.com/art/201110/298610.htm">Hadoop平台上的海量数据排序</a>
 
 #1.小结
 
