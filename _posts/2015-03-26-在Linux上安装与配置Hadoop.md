@@ -352,9 +352,13 @@ Hadoop允许参数传递，如下所示，当tempdir被调用时，basedir会作
 表2-1　Hadoop的守护进程配置表
   
   Name Node  -------->Hadoop_NameNode_OPTS
+  
   DATA Node  -------->Hadoop_DataNode_OPTS
+  
   Secondary Name Node>Hadoop_SecondaryNameNode_OPTS
+  
   Job Tracker-------->Hadoop_JobTracker_OPTS
+  
   Task Tracker------->Hadoop_TaskTracker_Opts
   
 例如，如果想设置NameNode使用parallelGC，那么可以这样写：
@@ -370,6 +374,30 @@ Hadoop允许参数传递，如下所示，当tempdir被调用时，basedir会作
 fs.default.name -------> NameNode 的IP地址及端口
 
 表2-3　conf/hdfs-site.xml的配置
+
+dfs.name.dir   ---------->    NameNode存储名字空间及汇报日志的位置
+
+dfs.data.dir   ---------->    DataNode存储数据块的位置
+
+表2-4　conf/mapred-site.xml的配置
+
+mapreduce.jobtracker.address   ---------->   JobTracker的IP地址及断口
+
+mapreduce.jobtracker.system.dir---------->   mapreduce在HDFS上存储的位置，例如：/Hadoop/mapred/system/
+
+mapreduce.cluster.local.dir    ---------->   mapreduce的缓存数据存储在文件系统上的位置
+
+mapred.tasktracker.{map|reduce}.tasks.maximum ---------->每台TaskTracker 所能运行的Map或reduce的task最大数量
+
+dfs.hosts/dfs.hosts.exclude    ---------->   允许或者禁止的DataNode列表
+
+mapreduce.jobtarcker.hosts.filename   ---------->   允许或者禁止的tasktracker列表
+
+marreduce.jobtracker.hosts.exclude.filename   ---------->  允许或者禁止的tasktracker列表
+
+mapreduce.cluster.job-authorization-enabled   ---------->  布尔类型，标志着JOB存取控制列表是否支持对JOB的观察和修改
+
+
 
 
   
