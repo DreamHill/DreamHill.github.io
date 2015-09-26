@@ -489,6 +489,62 @@ master服务每小时会把changelog.*.mfs文件合并到元数据文件中。
 
 也可以使用nagios监控MooseFS运行情况。
 
+MooseFS的基本用法
+
+在/mnt/mfs下建立folder1,在这个文件夹存储的文件有一个副本(setting goal=1)：
+
+    mkdir -p /mnt/mfs/folder1 
+
+建立folder2,在这个文件夹下存储的文件有两个副本(setting goal=2)：
+
+    mkdir -p /mnt/mfs/folder2 
+
+mfssetglal -r 命令设置文件夹的副本数：
+
+    #mfssetgoal -r 1 /mnt/mfs/folder1  
+    /mnt/mfs/folder1:  
+    inodes with goal changed:                         0  
+    inodes with goal not changed:                     1  
+    inodes with permission denied: 
+
+    #mfssetgoal -r 2 /mnt/mfs/folder2  
+    /mnt/mfs/folder2:  
+    inodes with goal changed:                         0  
+    inodes with goal not changed:                     1  
+    inodes with permission denied:                    0 
+
+复制一个文件到这两个文件夹：
+
+    cp /usr/src/mfs-1.6.15.tar.gz /mnt/mfs/folder1  
+    cp /usr/src/mfs-1.6.15.tar.gz /mnt/mfs/folder2 
+
+mfscheckfile 命令检查指定文件存储了几份副本
+
+foler1有一个副本存储在一个chuk：
+
+    #mfscheckfile /mnt/mfs/folder1/mfs-1.6.15.tar.gz  
+    /mnt/mfs/folder1/mfs-1.6.15.tar.gz:  
+    1 copies: 1 chunks 
+
+在foler2的文件mfs-1.6.15.tar.gz 保存两份副本：
+
+    #mfscheckfile /mnt/mfs/folder2/mfs-1.6.15.tar.gz  
+    /mnt/mfs/folder2/mfs-1.6.15.tar.gz:  
+    2 copies: 1 chunks 
+
+附加说明.当所有的进程安装在单独的服务器上时,你会看到文件仅仅保存一个副本甚至在设置goal=2时-这是正确的因为尽管有两个硬盘但是只有一个chunk server。
+
+停止MooseFS
+
+按以下步骤安全停止MooseFS集群：
+
+在所有机器上用umount命令卸载文件系统(在我们的示例中是:umount /mnt/mfs)：
+
+    停止chunk server进程: /usr/sbin/mfschunkserver stop  
+    停止metalogger进程: /usr/sbin/mfsmetalogger stop  
+    停止master server进程: /usr/sbin/mfsmaster stop 
+
+
 八、参考资料
 
 http://www.moosefs.org/reference-guide.html  官方手册
