@@ -397,7 +397,242 @@ marreduce.jobtracker.hosts.exclude.filename   ---------->  允许或者禁止的
 
 mapreduce.cluster.job-authorization-enabled   ---------->  布尔类型，标志着JOB存取控制列表是否支持对JOB的观察和修改
 
+配置并不复杂，一般而言，除了规定端口、IP地址、文件的存储位置外，其他配置都不是必须修改的，可以根据需要决定是采用默认配置还是自己修改。还有一点需要注意的是，以上配置都被默认为最终参数（final parameters），这些参数都不可以在程序中再次修改。
 
+接下来可以看一下conf/mapred-queues.xml的配置列表（如表2-5所示）。
+
+表2-5　conf/mapred-queues.xml的配置
+
+queues                    -根元素 无意义
+
+aclsEnabled               -是
+
+queue                     -无意义
+
+name                      -否
+
+state                     -是
+
+acl-submit-job            -是
+
+acl-administrator-job     -是
+
+properties                -无意义
+
+property                  -无意义
+
+key                       -调度程序指定
+
+value                     -调度程序指定
+
+相信大家能猜出上表中的mapred-queues.xml文件是用来做什么的，这个文件就是用来设置MapReduce系统的队列顺序的。queues是JobTracker中的一个抽象概念，可以在一定程度上管理job，因此它为管理员提供了一种管理job的方式。这种控制是常见且有效的，例如通过这种管理可以把不同的用户划分为不同的组，或分别赋予他们不同的级别，并且会优先执行高级别用户提交的job。
+
+建立和安装Cluster（2）
+
+按照这个思路，很容易想到三种原则：
+
+同一类用户提交的job统一提交到同一个queue中；
+
+运行时间较长的job可以提交到同一个queue中；
+
+把很快就能运行完成的job划分到一个queue中，并且限制好queue中job的数量上限。
+
+queues的有效性很依赖在JobTracker中通过mapreduce.jobtracker.taskscheduler设置的调度规则（scheduler），一些调度算法可能只需要一个queue，不过有些调度算法可能会很复杂，需要设置很多queue。
+
+queues的大部分设置的更改都不需要重新启动MapReduce系统就可以生效，不过也有一些需要重启系统的，具体可见表2-5。
+
+conf/mapred-queues.xml的文件配置与其他文件略有不同，配置格式如下所示：
+
+    <queues aclsEnabled="$aclsEnabled"> 
+              <queue> 
+                <name>$queue-namename> 
+                <state>$statestate> 
+                <queue> 
+                  <name>$child-queue1name> 
+                  <properties> 
+                     <property key="$key" value="$value"/> 
+                     ...  
+                  properties> 
+                  <queue> 
+                    <name>$grand-child-queue1name> 
+                    ...  
+                  queue> 
+                queue> 
+                <queue> 
+                  <name>$child-queue2name> 
+                  ...  
+                queue> 
+                ...  
+                ...  
+                ...  
+                <queue> 
+                  <name>$leaf-queuename> 
+                  <acl-submit-job>$aclsacl-submit-job> 
+                  <acl-administer-jobs>$aclsacl-administer-jobs> 
+                  <properties> 
+                     <property key="$key" value="$value"/> 
+                     ...  
+                  properties> 
+                queue> 
+              queue> 
+            queues> 
+
+以上这些就是Hadoop配置的主要内容，其他还有一些诸如内存配置方面的信息，如有兴趣可以参阅官方的配置文档。
+
+2.一个具体的配置
+
+为了方便阐述，这里只搭建一个有三台主机的小集群。
+
+相信读者还没有忘记Hadoop对主机的三种定位方式，分别为master和slave，JobTracker和TaskTracker，NameNode和DataNode。为了方便，在分配IP地址时顺便规定一下角色。
+
+下面是为这三台机器分配的IP地址及相应的角色：
+
+    10.37.128.2-master,NamoNode,jobtracker-master（主机名）  
+    10.37.128.3-slave,DataNode,tasktracker-slave1（主机名）  
+    10.37.128.4-slave,DataNode,tasktracker-slave2（主机名） 
+
+首先在三台主机上创建相同的用户（这是Hadoop的基本要求）：
+
+1）在三台主机上安装JDK 1.6，并设置环境变量。
+
+2）在这三台主机上安装OpenSSH，并配置SSH可以无密码登录。
+
+安装方式不再赘述，建立~/.ssh文件夹，如已存在，则无须创建。“~”代表Ubuntu的当前用户文件夹。
+
+生成密钥并配置SSH无密码登录本机，输入命令：
+
+    ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa  
+    cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys 
+
+将文件拷贝到两台slave主机相同的文件夹内，输入命令：
+
+    scp authorized_keys slave1:~/.ssh/  
+    scp authorized_keys slave2:~/.ssh/ 
+
+查看是否可以从master主机无密码登录slave，输入命令：
+
+    ssh slave1  
+    ssh slave2 
+
+3）在三台主机上分别设置/etc/hosts及/etc/hostname。
+
+hosts这个文件用于定义主机名与IP地址之间的对应关系。
+
+    /etc/hosts:  
+    127.0.0.1   localhost  
+    10.37.128.2 master  
+    10.37.128.3 slave1  
+    10.37.128.4 slave2 
+
+hostname这个文件用于定义Ubuntu的主机名。
+
+    /etc/hostname:  
+    你的主机名（如master，slave1等） 
+
+4）配置三台主机的Hadoop文件，内容如下：
+
+    conf/Hadoop-env.sh:  
+    export JAVA_HOME=“你的Java安装地址”  
+    conf/core-site.xml:  
+    xml version="1.0"?> 
+    xml-stylesheet type="text/xsl" href="configuration.xsl"?> 
+     
+     
+    <configuration> 
+    <property> 
+      <name>fs.default.namename> 
+      <value>hdfs://master:9000value> 
+    property> 
+    <property> 
+       <name>Hadoop.tmp.dirname> 
+       <value>你希望Hadoop存储数据块的位置value> //此文件夹需手动创建  
+    property> 
+    configuration> 
+    conf/hdfs-site.xml:  
+    xml version="1.0"?> 
+    xml-stylesheet type="text/xsl" href="configuration.xsl"?> 
+     
+     
+     
+    <configuration> 
+    <property> 
+      <name>dfs.replicationname> 
+      <value>2value> 
+    property> 
+    configuration> 
+    conf/mapred-site.xml:  
+    xml version="1.0"?> 
+    xml-stylesheet type="text/xsl" href="configuration.xsl"?> 
+     
+     
+     
+    <configuration> 
+    <property> 
+       <name>mapred.job.trackername> 
+      <value>master:9001value> 
+    property> 
+    configuration> 
+    conf/masters:  
+    master  
+    conf/slaves:  
+    slave1  
+    slave2 
+
+5）启动Hadoop。
+
+    bin/Hadoop NameNode -format  
+    bin/start-all.sh 
+
+你可以通过命令：
+
+    Hadoop dfsadmin -report 
+
+查看集群状态，或者通过http://master:50070及http://master:50030查看集群状态。 
+
+日志分析及几个小技巧
+
+如果大家在安装的时候遇到问题，或者按步骤安装完后却不能运行Hadoop，那么建议仔细查看日志信息，Hadoop记录了详尽的日志信息，日志文件保存在logs文件夹内。
+
+无论是启动，还是以后会经常用到的MapReduce中的每一个job，以及HDFS等相关信息，Hadoop均存有日志文件以供分析。
+
+例如：
+
+NameNode和DataNode的namespaceID不一致，这个错误是很多人在安装时会遇到的，日志信息为：
+
+    java.io.IOException: Incompatible namespaceIDs in /root/tmp/dfs/data: 
+    NameNode namespaceID = 1307672299; DataNode namespaceID = 389959598 
+
+若HDFS一直没有启动，读者可以查询日志，并通过日志进行分析，以上提示信息显示了NameNode和DataNode的namespaceID不一致。
+
+这个问题一般是由于两次或两次以上的格式化NameNode造成的，有两种方法可以解决，第一种方法是删除DataNode的所有资料；第二种方法是修改每个DataNode的namespaceID（位于/dfs/data/current/VERSION文件中）或修改NameNode的namespaceID（位于/dfs/name/current/VERSION文件中），使其一致。
+
+下面这两种方法在实际应用中也可能会用到。
+
+1） 重启坏掉的DataNode或JobTracker。当Hadoop集群的某单个节点出现问题时，一般不必重启整个系统，只须重启这个节点，它会自动连入整个集群。
+
+在坏死的节点上输入如下命令即可：
+
+    bin/Hadoop-daemon.sh start DataNode  
+    bin/Hadoop-daemon.sh start jobtracker 
+
+2） 动态加入DataNode或TaskTracker。这个命令允许用户动态将某个节点加入集群中。
+
+    bin/Hadoop-daemon.sh --config ./conf start DataNode  
+    bin/Hadoop-daemon.sh --config ./conf start tasktracker 
+    
+小结
+
+本章主要讲解了Hadoop的安装和配置过程。Hadoop的安装过程并不复杂，基本配置也简单明了，其中有以下几个关键点：
+
+Hadoop主要是用Java语言编写的，它无法使用Linux预装的OpenJDK，因此在安装Hadoop前要先安装Oracle公司的JDK（版本要在1.6以上）；
+
+作为分布式系统，Hadoop需要通过SSH的方式启动处于slave上的程序，因此必须安装和配置SSH。
+
+因此，在安装Hadoop前需要安装JDK和SSH。
+
+在Windows系统上安装Hadoop与在Linux系统上安装有一点不同，就是在Windows系统上需要通过Cygwin模拟Linux环境，而SSH的安装也需要在安装Cygwin时进行选择，请不要忘了这一点。
+
+集群配置只须记住conf/Hadoop-env.sh、conf/core-site.xml、conf/hdfs-site.xml、conf/mapred-site.xml、conf/mapred-queues.xml这5个文件的作用即可，另外Hadoop有些配置是可以在程序中修改的，这部分内容不是本章的重点，因此没有详细说明。
 
 
   
