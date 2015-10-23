@@ -1,9 +1,8 @@
 ---
 layout: post
-title:  "为什么找一款crm软件那么难？"
-date:   2015-10-22 15:00:00
+title:  "rails中实现excel,csv数据导入功能"
+date:   2015-05-07 17:20:00
 categories: crm
-banner_image: sample-banner-image-1.jpg
 comments: true
 ---
 在Web时代问，在移动时代继续问，最近两年移动CRM领域进来这么多玩家后，依然还是在问。越来越丰富的供给看来并不能完全满足实践中的CRM需求。尽管很多IT领域的需求和供给都在不断迭代，但CRM领域貌似到今天依然在纠结一些基础问题。
